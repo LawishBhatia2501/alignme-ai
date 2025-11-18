@@ -5,20 +5,60 @@ import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { POSE_CONNECTIONS } from "@mediapipe/pose";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Download } from "lucide-react";
+import SessionTimer from "./SessionTimer";
+import PostureStats from "./PostureStats";
+import SessionHistory from "./SessionHistory";
+import SettingsPanel from "./SettingsPanel";
+import { usePostureAudio } from "@/hooks/usePostureAudio";
+import { useToast } from "@/hooks/use-toast";
+
+interface HistoryItem {
+  timestamp: number;
+  neck: number;
+  shoulder: number;
+  back: number;
+  status: string;
+}
+
+interface Session {
+  id: string;
+  date: string;
+  duration: number;
+  goodPercentage: number;
+  badPercentage: number;
+}
 
 const PostureDetector = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [postureStatus, setPostureStatus] = useState<"good" | "bad" | "checking">("checking");
+  const { toast } = useToast();
+  
+  const [postureStatus, setPostureStatus] = useState<"good" | "okay" | "bad" | "checking">("checking");
   const [angles, setAngles] = useState({
     neck: 0,
     shoulder: 0,
     back: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isActive, setIsActive] = useState(false);
+  
+  // Statistics
+  const [goodCount, setGoodCount] = useState(0);
+  const [okayCount, setOkayCount] = useState(0);
+  const [badCount, setBadCount] = useState(0);
+  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  
+  // Settings
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [alertInterval, setAlertInterval] = useState(10);
+  const [sensitivity, setSensitivity] = useState(2); // 1=strict, 2=normal, 3=relaxed
+  
   const poseRef = useRef<Pose | null>(null);
   const cameraRef = useRef<Camera | null>(null);
+  const { playAlert } = usePostureAudio(audioEnabled, alertInterval);
 
   const calculateAngle = (a: any, b: any, c: any): number => {
     const radians =
@@ -45,20 +85,49 @@ const PostureDetector = () => {
     const leftKnee = landmarks[25];
     const backAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
 
-    setAngles({
+    const currentAngles = {
       neck: neckAngle,
       shoulder: Math.round(shoulderAngle),
       back: backAngle,
-    });
+    };
 
-    // Determine posture status
-    // Good posture: neck angle close to 180°, shoulders level, back straight
-    const isGoodPosture =
-      neckAngle > 160 && neckAngle < 200 && 
-      shoulderAngle < 5 && 
-      backAngle > 170;
+    setAngles(currentAngles);
 
-    setPostureStatus(isGoodPosture ? "good" : "bad");
+    // Determine posture status based on sensitivity
+    let status: "good" | "okay" | "bad";
+    
+    const strictness = sensitivity === 1 ? { neck: [165, 195], shoulder: 3, back: 172 }
+                     : sensitivity === 2 ? { neck: [160, 200], shoulder: 5, back: 170 }
+                     : { neck: [155, 205], shoulder: 7, back: 168 };
+
+    const isGood = neckAngle > strictness.neck[0] && neckAngle < strictness.neck[1] && 
+                   shoulderAngle < strictness.shoulder && 
+                   backAngle > strictness.back;
+    
+    const isOkay = neckAngle > (strictness.neck[0] - 10) && neckAngle < (strictness.neck[1] + 10) && 
+                   shoulderAngle < (strictness.shoulder + 3) && 
+                   backAngle > (strictness.back - 5);
+
+    if (isGood) {
+      status = "good";
+      setGoodCount(prev => prev + 1);
+    } else if (isOkay) {
+      status = "okay";
+      setOkayCount(prev => prev + 1);
+    } else {
+      status = "bad";
+      setBadCount(prev => prev + 1);
+      playAlert();
+    }
+
+    setPostureStatus(status);
+
+    // Add to history
+    setHistoryData(prev => [...prev, {
+      timestamp: Date.now(),
+      ...currentAngles,
+      status,
+    }]);
   };
 
   const onResults = (results: Results) => {
@@ -137,39 +206,121 @@ const PostureDetector = () => {
       cameraRef.current = camera;
       await camera.start();
       setIsLoading(false);
+      setIsActive(true);
     };
 
     initializePose();
+
+    // Load sessions from localStorage
+    const savedSessions = localStorage.getItem("alignme_sessions");
+    if (savedSessions) {
+      setSessions(JSON.parse(savedSessions));
+    }
 
     return () => {
       if (cameraRef.current) {
         cameraRef.current.stop();
       }
     };
-  }, []);
+  }, [sensitivity]);
+
+  const saveSession = () => {
+    const total = goodCount + okayCount + badCount;
+    if (total === 0) return;
+
+    const goodPercentage = Math.round((goodCount / total) * 100);
+    const badPercentage = Math.round((badCount / total) * 100);
+    const sessionTime = parseInt(localStorage.getItem("alignme_session_time") || "0");
+
+    const newSession: Session = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleString(),
+      duration: sessionTime,
+      goodPercentage,
+      badPercentage,
+    };
+
+    const updatedSessions = [newSession, ...sessions].slice(0, 10); // Keep last 10 sessions
+    setSessions(updatedSessions);
+    localStorage.setItem("alignme_sessions", JSON.stringify(updatedSessions));
+
+    toast({
+      title: "Session Saved",
+      description: `${goodPercentage}% good posture maintained`,
+    });
+  };
+
+  const exportData = () => {
+    const csvContent = [
+      ["Timestamp", "Neck Angle", "Shoulder Level", "Back Angle", "Status"],
+      ...historyData.map(item => [
+        new Date(item.timestamp).toISOString(),
+        item.neck,
+        item.shoulder,
+        item.back,
+        item.status,
+      ])
+    ].map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `posture-data-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Data Exported",
+      description: "Posture data saved as CSV",
+    });
+  };
+
+  const clearHistory = () => {
+    setSessions([]);
+    localStorage.removeItem("alignme_sessions");
+    toast({
+      title: "History Cleared",
+      description: "All session history has been removed",
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-6xl space-y-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="w-full max-w-7xl mx-auto space-y-4">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-hero flex items-center justify-center shadow-soft">
-              <Activity className="w-7 h-7 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center shadow-soft">
+              <Activity className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              AlignMe
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+                AlignMe
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                AI-Powered Posture Correction
+              </p>
+            </div>
           </div>
-          <p className="text-lg text-muted-foreground">
-            AI-Powered Posture Correction System
-          </p>
+          <div className="flex gap-2">
+            <Button onClick={saveSession} variant="outline" size="sm">
+              Save Session
+            </Button>
+            <Button onClick={exportData} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
         </div>
 
+        {/* Session Timer */}
+        <SessionTimer isActive={isActive} />
+
         {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-5 gap-4">
           {/* Video Feed */}
-          <Card className="lg:col-span-2 border-border/50 shadow-hover">
+          <Card className="lg:col-span-3 border-border/50 shadow-hover">
             <CardContent className="p-6">
               <div className="relative aspect-video bg-card rounded-lg overflow-hidden">
                 {isLoading && (
@@ -194,15 +345,17 @@ const PostureDetector = () => {
                 {!isLoading && (
                   <div className="absolute top-4 left-4">
                     <Badge 
-                      className={`text-lg px-4 py-2 ${
+                      className={`text-base px-3 py-1.5 ${
                         postureStatus === "good" 
                           ? "bg-accent text-accent-foreground" 
+                          : postureStatus === "okay"
+                          ? "bg-warning text-warning-foreground"
                           : postureStatus === "bad"
                           ? "bg-destructive text-destructive-foreground"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      Posture: {postureStatus === "good" ? "Good ✓" : postureStatus === "bad" ? "Bad ✗" : "Checking..."}
+                      {postureStatus === "good" ? "✓ Good" : postureStatus === "okay" ? "~ Okay" : postureStatus === "bad" ? "✗ Bad" : "Checking..."}
                     </Badge>
                   </div>
                 )}
@@ -210,19 +363,20 @@ const PostureDetector = () => {
             </CardContent>
           </Card>
 
-          {/* Angles Panel */}
-          <Card className="border-border/50 shadow-hover">
-            <CardContent className="p-6 space-y-6">
-              <div>
-                <h3 className="text-xl font-bold mb-4">Posture Angles</h3>
-                <div className="space-y-4">
+          {/* Right Sidebar */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Angles Panel */}
+            <Card className="border-border/50 shadow-hover">
+              <CardContent className="p-4 space-y-4">
+                <h3 className="text-lg font-bold mb-3">Live Angles</h3>
+                <div className="space-y-3">
                   {/* Neck Angle */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Neck Alignment</span>
-                      <span className="text-2xl font-bold text-primary">{angles.neck}°</span>
+                      <span className="text-xs font-medium">Neck Alignment</span>
+                      <span className="text-xl font-bold text-primary">{angles.neck}°</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
                           angles.neck > 160 && angles.neck < 200
@@ -232,18 +386,15 @@ const PostureDetector = () => {
                         style={{ width: `${Math.min(100, (angles.neck / 180) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Ideal: 160° - 200°
-                    </p>
                   </div>
 
                   {/* Shoulder Level */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Shoulder Level</span>
-                      <span className="text-2xl font-bold text-primary">{angles.shoulder}°</span>
+                      <span className="text-xs font-medium">Shoulder Level</span>
+                      <span className="text-xl font-bold text-primary">{angles.shoulder}°</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
                           angles.shoulder < 5 ? "bg-accent" : "bg-destructive"
@@ -251,18 +402,15 @@ const PostureDetector = () => {
                         style={{ width: `${Math.min(100, (angles.shoulder / 20) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Ideal: {"<"} 5° (level shoulders)
-                    </p>
                   </div>
 
                   {/* Back Angle */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Back Alignment</span>
-                      <span className="text-2xl font-bold text-primary">{angles.back}°</span>
+                      <span className="text-xs font-medium">Back Alignment</span>
+                      <span className="text-xl font-bold text-primary">{angles.back}°</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
                           angles.back > 170 ? "bg-accent" : "bg-destructive"
@@ -270,37 +418,32 @@ const PostureDetector = () => {
                         style={{ width: `${Math.min(100, (angles.back / 180) * 100)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Ideal: {">"} 170° (straight back)
-                    </p>
                   </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Tips Section */}
-              <div className="pt-4 border-t border-border">
-                <h4 className="font-semibold mb-3">Tips for Good Posture:</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                    <span>Keep your back straight</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                    <span>Align your head with your spine</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                    <span>Relax your shoulders</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 flex-shrink-0" />
-                    <span>Keep feet flat on the floor</span>
-                  </li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Stats */}
+            <PostureStats
+              historyData={historyData}
+              goodCount={goodCount}
+              okayCount={okayCount}
+              badCount={badCount}
+            />
+
+            {/* Settings */}
+            <SettingsPanel
+              audioEnabled={audioEnabled}
+              onAudioToggle={setAudioEnabled}
+              alertInterval={alertInterval}
+              onAlertIntervalChange={setAlertInterval}
+              sensitivity={sensitivity}
+              onSensitivityChange={setSensitivity}
+            />
+
+            {/* Session History */}
+            <SessionHistory sessions={sessions} onClearHistory={clearHistory} />
+          </div>
         </div>
       </div>
     </div>
