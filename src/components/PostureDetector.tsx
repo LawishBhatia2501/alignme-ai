@@ -6,13 +6,15 @@ import { POSE_CONNECTIONS } from "@mediapipe/pose";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Download } from "lucide-react";
+import { Activity, Download, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 import SessionTimer from "./SessionTimer";
 import PostureStats from "./PostureStats";
 import SessionHistory from "./SessionHistory";
 import SettingsPanel from "./SettingsPanel";
 import { usePostureAudio } from "@/hooks/usePostureAudio";
 import { useToast } from "@/hooks/use-toast";
+import { PostureClassifier } from "@/utils/postureClassifier";
 
 interface HistoryItem {
   timestamp: number;
@@ -58,6 +60,7 @@ const PostureDetector = () => {
   
   const poseRef = useRef<Pose | null>(null);
   const cameraRef = useRef<Camera | null>(null);
+  const classifierRef = useRef(new PostureClassifier());
   const { playAlert } = usePostureAudio(audioEnabled, alertInterval);
 
   const calculateAngle = (a: any, b: any, c: any): number => {
@@ -71,63 +74,89 @@ const PostureDetector = () => {
   };
 
   const analyzePosture = (landmarks: any[]) => {
-    // Calculate neck angle (ear - shoulder - hip)
-    const leftEar = landmarks[7];
+    // Extract all landmark points following the user's Python code structure
     const leftShoulder = landmarks[11];
-    const leftHip = landmarks[23];
-    const neckAngle = calculateAngle(leftEar, leftShoulder, leftHip);
-
-    // Calculate shoulder angle
     const rightShoulder = landmarks[12];
-    const shoulderAngle = Math.abs(leftShoulder.y - rightShoulder.y) * 100;
-
-    // Calculate back angle (shoulder - hip - knee)
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftEar = landmarks[7];
+    const rightEar = landmarks[8];
+    const leftElbow = landmarks[13];
+    const rightElbow = landmarks[14];
     const leftKnee = landmarks[25];
-    const backAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
+    const rightKnee = landmarks[26];
+
+    // Calculate midpoints (from app.py)
+    const midShoulder = {
+      x: (leftShoulder.x + rightShoulder.x) / 2,
+      y: (leftShoulder.y + rightShoulder.y) / 2,
+    };
+    const midHip = {
+      x: (leftHip.x + rightHip.x) / 2,
+      y: (leftHip.y + rightHip.y) / 2,
+    };
+    const midEar = {
+      x: (leftEar.x + rightEar.x) / 2,
+      y: (leftEar.y + rightEar.y) / 2,
+    };
+
+    // Calculate angles using the same logic as app.py
+    const backAngle = calculateAngle(midEar, midShoulder, midHip);
+    const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y) * 100;
+    const neckAngle = calculateAngle(leftShoulder, midEar, rightShoulder);
+    
+    // Additional angles for ML model (from posture_data.csv)
+    const elbowAngle = calculateAngle(leftShoulder, leftElbow, { 
+      x: leftElbow.x, 
+      y: leftElbow.y + 0.1 
+    });
+    const hipAngle = calculateAngle(midShoulder, midHip, leftKnee);
+    const kneeAngle = calculateAngle(leftHip, leftKnee, {
+      x: leftKnee.x,
+      y: leftKnee.y + 0.1
+    });
 
     const currentAngles = {
-      neck: neckAngle,
-      shoulder: Math.round(shoulderAngle),
-      back: backAngle,
+      neck: Math.round(neckAngle),
+      shoulder: Math.round(shoulderLevel),
+      back: Math.round(backAngle),
     };
 
     setAngles(currentAngles);
 
-    // Determine posture status based on sensitivity
-    let status: "good" | "okay" | "bad";
-    
-    const strictness = sensitivity === 1 ? { neck: [165, 195], shoulder: 3, back: 172 }
-                     : sensitivity === 2 ? { neck: [160, 200], shoulder: 5, back: 170 }
-                     : { neck: [155, 205], shoulder: 7, back: 168 };
+    // Use the classifier with adjusted sensitivity
+    const sensitivityMultiplier = sensitivity === 1 ? 0.9 : sensitivity === 2 ? 1.0 : 1.1;
+    const adjustedBackAngle = backAngle * sensitivityMultiplier;
+    const adjustedShoulderLevel = shoulderLevel / sensitivityMultiplier;
+    const adjustedNeckAngle = neckAngle * sensitivityMultiplier;
 
-    const isGood = neckAngle > strictness.neck[0] && neckAngle < strictness.neck[1] && 
-                   shoulderAngle < strictness.shoulder && 
-                   backAngle > strictness.back;
-    
-    const isOkay = neckAngle > (strictness.neck[0] - 10) && neckAngle < (strictness.neck[1] + 10) && 
-                   shoulderAngle < (strictness.shoulder + 3) && 
-                   backAngle > (strictness.back - 5);
+    const status = classifierRef.current.classifySimple(
+      adjustedBackAngle,
+      adjustedShoulderLevel,
+      adjustedNeckAngle
+    );
 
-    if (isGood) {
-      status = "good";
+    // Update counters
+    if (status === "good") {
       setGoodCount(prev => prev + 1);
-    } else if (isOkay) {
-      status = "okay";
+    } else if (status === "okay") {
       setOkayCount(prev => prev + 1);
     } else {
-      status = "bad";
       setBadCount(prev => prev + 1);
       playAlert();
     }
 
     setPostureStatus(status);
 
-    // Add to history
-    setHistoryData(prev => [...prev, {
-      timestamp: Date.now(),
-      ...currentAngles,
-      status,
-    }]);
+    // Add to history (limit to last 100 entries for performance)
+    setHistoryData(prev => {
+      const newData = [...prev, {
+        timestamp: Date.now(),
+        ...currentAngles,
+        status,
+      }];
+      return newData.slice(-100);
+    });
   };
 
   const onResults = (results: Results) => {
@@ -304,6 +333,12 @@ const PostureDetector = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <Link to="/">
+              <Button variant="ghost" size="sm">
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </Button>
+            </Link>
             <Button onClick={saveSession} variant="outline" size="sm">
               Save Session
             </Button>
