@@ -6,8 +6,9 @@ import { POSE_CONNECTIONS } from "@mediapipe/pose";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Download, Home } from "lucide-react";
+import { Activity, Download, Home, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 import SessionTimer from "./SessionTimer";
 import PostureStats from "./PostureStats";
 import SessionHistory from "./SessionHistory";
@@ -36,6 +37,7 @@ const PostureDetector = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   const [postureStatus, setPostureStatus] = useState<"good" | "okay" | "bad" | "checking">("checking");
   const [angles, setAngles] = useState({
@@ -303,6 +305,16 @@ const PostureDetector = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="w-9 h-9 p-0"
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
             <Link to="/">
               <Button variant="ghost" size="sm">
                 <Home className="w-4 h-4 mr-2" />
@@ -384,12 +396,12 @@ const PostureDetector = () => {
                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                        <div
                          className={`h-full transition-all duration-300 ${
-                           angles.back > 150 ? "bg-accent" : angles.back > 130 ? "bg-warning" : "bg-destructive"
+                           angles.back >= 155 ? "bg-accent" : angles.back >= 135 ? "bg-warning" : "bg-destructive"
                          }`}
                          style={{ width: `${Math.min(100, (angles.back / 180) * 100)}%` }}
                        />
                      </div>
-                     <p className="text-xs text-muted-foreground">Good: &gt;150° | Okay: &gt;130°</p>
+                     <p className="text-xs text-muted-foreground">Good: ≥155° | Okay: ≥135°</p>
                    </div>
 
                    {/* Shoulder Level */}
@@ -401,12 +413,12 @@ const PostureDetector = () => {
                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                        <div
                          className={`h-full transition-all duration-300 ${
-                           angles.shoulder < 5 ? "bg-accent" : angles.shoulder < 8 ? "bg-warning" : "bg-destructive"
+                           angles.shoulder < 4 ? "bg-accent" : angles.shoulder < 7 ? "bg-warning" : "bg-destructive"
                          }`}
                          style={{ width: `${Math.min(100, (angles.shoulder / 15) * 100)}%` }}
                        />
                      </div>
-                     <p className="text-xs text-muted-foreground">Good: &lt;5 | Okay: &lt;8</p>
+                     <p className="text-xs text-muted-foreground">Good: &lt;4 | Okay: &lt;7</p>
                    </div>
 
                    {/* Neck Angle */}
