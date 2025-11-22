@@ -14,7 +14,7 @@ import SessionHistory from "./SessionHistory";
 import SettingsPanel from "./SettingsPanel";
 import { usePostureAudio } from "@/hooks/usePostureAudio";
 import { useToast } from "@/hooks/use-toast";
-import { PostureClassifier } from "@/utils/postureClassifier";
+import { PostureClassifier, calculateAngle } from "@/utils/postureClassifier";
 
 interface HistoryItem {
   timestamp: number;
@@ -63,78 +63,48 @@ const PostureDetector = () => {
   const classifierRef = useRef(new PostureClassifier());
   const { playAlert } = usePostureAudio(audioEnabled, alertInterval);
 
-  const calculateAngle = (a: any, b: any, c: any): number => {
-    const radians =
-      Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-    let angle = Math.abs((radians * 180.0) / Math.PI);
-    if (angle > 180.0) {
-      angle = 360 - angle;
-    }
-    return Math.round(angle);
-  };
-
   const analyzePosture = (landmarks: any[]) => {
-    // Extract all landmark points following the user's Python code structure
+    // Extract key landmarks - exact same as app.py
     const leftShoulder = landmarks[11];
     const rightShoulder = landmarks[12];
     const leftHip = landmarks[23];
     const rightHip = landmarks[24];
     const leftEar = landmarks[7];
     const rightEar = landmarks[8];
-    const leftElbow = landmarks[13];
-    const rightElbow = landmarks[14];
-    const leftKnee = landmarks[25];
-    const rightKnee = landmarks[26];
 
-    // Calculate midpoints (from app.py)
-    const midShoulder = {
-      x: (leftShoulder.x + rightShoulder.x) / 2,
-      y: (leftShoulder.y + rightShoulder.y) / 2,
-    };
-    const midHip = {
-      x: (leftHip.x + rightHip.x) / 2,
-      y: (leftHip.y + rightHip.y) / 2,
-    };
-    const midEar = {
-      x: (leftEar.x + rightEar.x) / 2,
-      y: (leftEar.y + rightEar.y) / 2,
-    };
+    // Calculate midpoints (exact same as app.py)
+    const midShoulder = [
+      (leftShoulder.x + rightShoulder.x) / 2,
+      (leftShoulder.y + rightShoulder.y) / 2,
+    ];
+    const midHip = [
+      (leftHip.x + rightHip.x) / 2,
+      (leftHip.y + rightHip.y) / 2,
+    ];
+    const midEar = [
+      (leftEar.x + rightEar.x) / 2,
+      (leftEar.y + rightEar.y) / 2,
+    ];
 
-    // Calculate angles using the same logic as app.py
+    // Calculate angles - exact same as app.py
     const backAngle = calculateAngle(midEar, midShoulder, midHip);
     const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y) * 100;
-    const neckAngle = calculateAngle(leftShoulder, midEar, rightShoulder);
-    
-    // Additional angles for ML model (from posture_data.csv)
-    const elbowAngle = calculateAngle(leftShoulder, leftElbow, { 
-      x: leftElbow.x, 
-      y: leftElbow.y + 0.1 
-    });
-    const hipAngle = calculateAngle(midShoulder, midHip, leftKnee);
-    const kneeAngle = calculateAngle(leftHip, leftKnee, {
-      x: leftKnee.x,
-      y: leftKnee.y + 0.1
-    });
+    const neckAngle = calculateAngle(
+      [leftShoulder.x, leftShoulder.y], 
+      midEar, 
+      [rightShoulder.x, rightShoulder.y]
+    );
 
     const currentAngles = {
-      neck: Math.round(neckAngle),
-      shoulder: Math.round(shoulderLevel),
-      back: Math.round(backAngle),
+      neck: Math.round(neckAngle * 10) / 10,
+      shoulder: Math.round(shoulderLevel * 10) / 10,
+      back: Math.round(backAngle * 10) / 10,
     };
 
     setAngles(currentAngles);
 
-    // Use the classifier with adjusted sensitivity
-    const sensitivityMultiplier = sensitivity === 1 ? 0.9 : sensitivity === 2 ? 1.0 : 1.1;
-    const adjustedBackAngle = backAngle * sensitivityMultiplier;
-    const adjustedShoulderLevel = shoulderLevel / sensitivityMultiplier;
-    const adjustedNeckAngle = neckAngle * sensitivityMultiplier;
-
-    const status = classifierRef.current.classifySimple(
-      adjustedBackAngle,
-      adjustedShoulderLevel,
-      adjustedNeckAngle
-    );
+    // Determine posture status using classifier (exact thresholds from app.py)
+    const status = classifierRef.current.classify(backAngle, shoulderLevel);
 
     // Update counters
     if (status === "good") {
@@ -404,57 +374,56 @@ const PostureDetector = () => {
             <Card className="border-border/50 shadow-hover">
               <CardContent className="p-4 space-y-4">
                 <h3 className="text-lg font-bold mb-3">Live Angles</h3>
-                <div className="space-y-3">
-                  {/* Neck Angle */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">Neck Alignment</span>
-                      <span className="text-xl font-bold text-primary">{angles.neck}°</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          angles.neck > 160 && angles.neck < 200
-                            ? "bg-accent"
-                            : "bg-destructive"
-                        }`}
-                        style={{ width: `${Math.min(100, (angles.neck / 180) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
+                 <div className="space-y-3">
+                   {/* Back Angle */}
+                   <div className="space-y-1.5">
+                     <div className="flex items-center justify-between">
+                       <span className="text-xs font-medium">Back Alignment</span>
+                       <span className="text-xl font-bold text-primary">{angles.back}°</span>
+                     </div>
+                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                       <div
+                         className={`h-full transition-all duration-300 ${
+                           angles.back > 150 ? "bg-accent" : angles.back > 130 ? "bg-warning" : "bg-destructive"
+                         }`}
+                         style={{ width: `${Math.min(100, (angles.back / 180) * 100)}%` }}
+                       />
+                     </div>
+                     <p className="text-xs text-muted-foreground">Good: &gt;150° | Okay: &gt;130°</p>
+                   </div>
 
-                  {/* Shoulder Level */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">Shoulder Level</span>
-                      <span className="text-xl font-bold text-primary">{angles.shoulder}°</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          angles.shoulder < 5 ? "bg-accent" : "bg-destructive"
-                        }`}
-                        style={{ width: `${Math.min(100, (angles.shoulder / 20) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
+                   {/* Shoulder Level */}
+                   <div className="space-y-1.5">
+                     <div className="flex items-center justify-between">
+                       <span className="text-xs font-medium">Shoulder Level</span>
+                       <span className="text-xl font-bold text-primary">{angles.shoulder.toFixed(1)}</span>
+                     </div>
+                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                       <div
+                         className={`h-full transition-all duration-300 ${
+                           angles.shoulder < 5 ? "bg-accent" : angles.shoulder < 8 ? "bg-warning" : "bg-destructive"
+                         }`}
+                         style={{ width: `${Math.min(100, (angles.shoulder / 15) * 100)}%` }}
+                       />
+                     </div>
+                     <p className="text-xs text-muted-foreground">Good: &lt;5 | Okay: &lt;8</p>
+                   </div>
 
-                  {/* Back Angle */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">Back Alignment</span>
-                      <span className="text-xl font-bold text-primary">{angles.back}°</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          angles.back > 170 ? "bg-accent" : "bg-destructive"
-                        }`}
-                        style={{ width: `${Math.min(100, (angles.back / 180) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                   {/* Neck Angle */}
+                   <div className="space-y-1.5">
+                     <div className="flex items-center justify-between">
+                       <span className="text-xs font-medium">Neck Angle</span>
+                       <span className="text-xl font-bold text-primary">{angles.neck}°</span>
+                     </div>
+                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                       <div
+                         className={`h-full transition-all duration-300 bg-primary`}
+                         style={{ width: `${Math.min(100, (angles.neck / 180) * 100)}%` }}
+                       />
+                     </div>
+                     <p className="text-xs text-muted-foreground">Reference angle</p>
+                   </div>
+                 </div>
               </CardContent>
             </Card>
 
