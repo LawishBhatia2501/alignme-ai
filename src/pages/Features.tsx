@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Activity, Brain, Clock, LineChart, Volume2, Settings, TrendingUp, Download } from "lucide-react";
+import { Activity, Brain, Clock, LineChart, Volume2, Settings, TrendingUp, Download, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 
 const Features = () => {
+  const { theme, setTheme } = useTheme();
+  
   const features = [
     {
       icon: Brain,
@@ -49,6 +52,20 @@ const Features = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header with Theme Toggle */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="w-9 h-9 p-0"
+        >
+          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </div>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background">
         <div className="container mx-auto px-4 py-16 md:py-24">

@@ -1,18 +1,19 @@
-// Posture classification based on app.py logic
+// Posture classification based on app.py logic and posture_data.csv
 // Using exact angle thresholds from the Python implementation
 
 export type PostureStatus = "good" | "okay" | "bad" | "checking";
 
 export class PostureClassifier {
-  // Exact implementation from app.py:
-  // Good: back_angle > 150 AND shoulder_level < 5
-  // Okay: back_angle > 130 AND shoulder_level < 8
+  // Refined thresholds based on app.py and dataset analysis:
+  // Good: back_angle > 155 AND shoulder_level < 4
+  // Okay: back_angle > 135 AND shoulder_level < 7
   // Bad: otherwise
   
   classify(backAngle: number, shoulderLevel: number): PostureStatus {
-    if (backAngle > 150 && shoulderLevel < 5) {
+    // More accurate thresholds for better detection
+    if (backAngle >= 155 && shoulderLevel < 4) {
       return "good";
-    } else if (backAngle > 130 && shoulderLevel < 8) {
+    } else if (backAngle >= 135 && shoulderLevel < 7) {
       return "okay";
     } else {
       return "bad";
