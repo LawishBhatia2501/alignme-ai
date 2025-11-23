@@ -1,8 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera } from "@mediapipe/camera_utils";
-import { Pose, Results } from "@mediapipe/pose";
-import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
-import { POSE_CONNECTIONS } from "@mediapipe/pose";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,8 +57,8 @@ const PostureDetector = () => {
   const [alertInterval, setAlertInterval] = useState(10);
   const [sensitivity, setSensitivity] = useState(2); // 1=strict, 2=normal, 3=relaxed
   
-  const poseRef = useRef<Pose | null>(null);
-  const cameraRef = useRef<Camera | null>(null);
+  const poseRef = useRef<any>(null);
+  const cameraRef = useRef<any>(null);
   const classifierRef = useRef(new PostureClassifier());
   const { playAlert } = usePostureAudio(audioEnabled, alertInterval);
 
@@ -132,7 +128,7 @@ const PostureDetector = () => {
     });
   };
 
-  const onResults = (results: Results) => {
+  const onResults = (results: any) => {
     if (!canvasRef.current || !videoRef.current) return;
 
     const canvasCtx = canvasRef.current.getContext("2d");
@@ -155,16 +151,19 @@ const PostureDetector = () => {
     );
 
     if (results.poseLandmarks) {
-      // Draw pose landmarks
-      drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-        color: "#00FF00",
-        lineWidth: 4,
-      });
-      drawLandmarks(canvasCtx, results.poseLandmarks, {
-        color: "#FF0000",
-        lineWidth: 2,
-        radius: 6,
-      });
+      // Draw pose landmarks using global drawing_utils
+      const drawingUtils = (window as any).drawingUtils || (window as any);
+      if (drawingUtils.drawConnectors) {
+        drawingUtils.drawConnectors(canvasCtx, results.poseLandmarks, (window as any).POSE_CONNECTIONS, {
+          color: "#00FF00",
+          lineWidth: 4,
+        });
+        drawingUtils.drawLandmarks(canvasCtx, results.poseLandmarks, {
+          color: "#FF0000",
+          lineWidth: 2,
+          radius: 6,
+        });
+      }
 
       // Analyze posture
       analyzePosture(results.poseLandmarks);
@@ -178,6 +177,26 @@ const PostureDetector = () => {
       try {
         if (!videoRef.current) return;
 
+        // Wait for MediaPipe scripts to load
+        const waitForMediaPipe = () => {
+          return new Promise<void>((resolve, reject) => {
+            const checkInterval = setInterval(() => {
+              if ((window as any).Pose && (window as any).Camera) {
+                clearInterval(checkInterval);
+                resolve();
+              }
+            }, 100);
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
+              clearInterval(checkInterval);
+              reject(new Error("MediaPipe libraries failed to load"));
+            }, 10000);
+          });
+        };
+
+        await waitForMediaPipe();
+
         // Request camera permissions first
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
@@ -190,9 +209,10 @@ const PostureDetector = () => {
         // Stop the stream as MediaPipe will handle it
         stream.getTracks().forEach(track => track.stop());
 
-        // Initialize MediaPipe Pose with proper CDN
+        // Initialize MediaPipe Pose using global object
+        const Pose = (window as any).Pose;
         const pose = new Pose({
-          locateFile: (file) => {
+          locateFile: (file: string) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`;
           },
         });
@@ -209,7 +229,8 @@ const PostureDetector = () => {
         pose.onResults(onResults);
         poseRef.current = pose;
 
-        // Initialize camera
+        // Initialize camera using global Camera object
+        const Camera = (window as any).Camera;
         const camera = new Camera(videoRef.current, {
           onFrame: async () => {
             if (videoRef.current && poseRef.current) {
