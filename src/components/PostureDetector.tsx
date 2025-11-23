@@ -190,14 +190,12 @@ const PostureDetector = () => {
         // Stop the stream as MediaPipe will handle it
         stream.getTracks().forEach(track => track.stop());
 
-        // Initialize MediaPipe Pose with CDN fallback
+        // Initialize MediaPipe Pose with proper CDN
         const pose = new Pose({
           locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`;
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`;
           },
         });
-
-        await pose.initialize();
 
         pose.setOptions({
           modelComplexity: 1,
