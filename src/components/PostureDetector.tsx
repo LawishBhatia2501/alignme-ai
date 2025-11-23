@@ -47,6 +47,7 @@ const PostureDetector = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isActive, setIsActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Statistics
   const [goodCount, setGoodCount] = useState(0);
@@ -174,40 +175,82 @@ const PostureDetector = () => {
 
   useEffect(() => {
     const initializePose = async () => {
-      if (!videoRef.current) return;
+      try {
+        if (!videoRef.current) return;
 
-      const pose = new Pose({
-        locateFile: (file) => {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-        },
-      });
+        // Request camera permissions first
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "user"
+          } 
+        });
+        
+        // Stop the stream as MediaPipe will handle it
+        stream.getTracks().forEach(track => track.stop());
 
-      pose.setOptions({
-        modelComplexity: 1,
-        smoothLandmarks: true,
-        enableSegmentation: false,
-        smoothSegmentation: false,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      });
+        // Initialize MediaPipe Pose with CDN fallback
+        const pose = new Pose({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`;
+          },
+        });
 
-      pose.onResults(onResults);
-      poseRef.current = pose;
+        await pose.initialize();
 
-      const camera = new Camera(videoRef.current, {
-        onFrame: async () => {
-          if (videoRef.current && poseRef.current) {
-            await poseRef.current.send({ image: videoRef.current });
+        pose.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          enableSegmentation: false,
+          smoothSegmentation: false,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        pose.onResults(onResults);
+        poseRef.current = pose;
+
+        // Initialize camera
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            if (videoRef.current && poseRef.current) {
+              await poseRef.current.send({ image: videoRef.current });
+            }
+          },
+          width: 1280,
+          height: 720,
+        });
+
+        cameraRef.current = camera;
+        await camera.start();
+        setIsLoading(false);
+        setIsActive(true);
+        setError(null);
+      } catch (err) {
+        console.error("Error initializing camera/pose:", err);
+        setIsLoading(false);
+        
+        if (err instanceof Error) {
+          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+            setError("Camera access denied. Please allow camera permissions in your browser settings and refresh the page.");
+          } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+            setError("No camera found. Please connect a camera and refresh the page.");
+          } else if (err.name === "NotReadableError") {
+            setError("Camera is already in use by another application. Please close other apps using the camera.");
+          } else {
+            setError("Failed to initialize camera. Please refresh the page and try again.");
           }
-        },
-        width: 1280,
-        height: 720,
-      });
+        } else {
+          setError("Failed to initialize camera. Please refresh the page and try again.");
+        }
 
-      cameraRef.current = camera;
-      await camera.start();
-      setIsLoading(false);
-      setIsActive(true);
+        toast({
+          title: "Camera Error",
+          description: "Unable to access camera. Please check permissions.",
+          variant: "destructive",
+        });
+      }
     };
 
     initializePose();
@@ -222,8 +265,11 @@ const PostureDetector = () => {
       if (cameraRef.current) {
         cameraRef.current.stop();
       }
+      if (poseRef.current) {
+        poseRef.current.close();
+      }
     };
-  }, [sensitivity]);
+  }, []);
 
   const saveSession = () => {
     const total = goodCount + okayCount + badCount;
@@ -340,11 +386,23 @@ const PostureDetector = () => {
           <Card className="lg:col-span-3 border-border/50 shadow-hover">
             <CardContent className="p-6">
               <div className="relative aspect-video bg-card rounded-lg overflow-hidden">
-                {isLoading && (
+                {isLoading && !error && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted">
                     <div className="text-center space-y-2">
                       <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
                       <p className="text-sm text-muted-foreground">Initializing camera...</p>
+                      <p className="text-xs text-muted-foreground">Please allow camera access when prompted</p>
+                    </div>
+                  </div>
+                )}
+                {error && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted p-6">
+                    <div className="text-center space-y-4 max-w-md">
+                      <div className="text-4xl">📷</div>
+                      <p className="text-sm font-medium text-destructive">{error}</p>
+                      <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+                        Refresh Page
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -352,6 +410,7 @@ const PostureDetector = () => {
                   ref={videoRef}
                   className="absolute inset-0 w-full h-full object-cover hidden"
                   playsInline
+                  autoPlay
                 />
                 <canvas
                   ref={canvasRef}
