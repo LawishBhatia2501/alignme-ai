@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Activity, Brain, Clock, LineChart, Volume2, Settings, TrendingUp, Download, Moon, Sun } from "lucide-react";
+import { Activity, Brain, Clock, LineChart, Volume2, Settings, TrendingUp, Download, Moon, Sun, Cpu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 
@@ -47,6 +47,11 @@ const Features = () => {
       icon: Settings,
       title: "Customizable Settings",
       description: "Adjust sensitivity, alert intervals, and audio preferences to match your needs",
+    },
+    {
+      icon: Cpu,
+      title: "Hardware Integration",
+      description: "Expandable to work with MPU6050 sensors for enhanced physical tracking accuracy",
     },
   ];
 
@@ -181,81 +186,30 @@ const Features = () => {
         </div>
       </div>
 
-      {/* MPU6050 Hardware Integration Section */}
+      {/* Hardware Integration CTA */}
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Hardware Integration</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Expandable to work with physical sensors for enhanced accuracy
-            </p>
-          </div>
-
-          <Card className="border-border/50 shadow-hover">
-            <CardContent className="p-8 md:p-12">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-6">
-                  <h3 className="text-2xl font-bold">MPU6050 Sensor Integration</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    The <strong>MPU6050</strong> is a 6-axis motion tracking device that combines a 3-axis gyroscope 
-                    and a 3-axis accelerometer. This sensor can be integrated with our system to provide precise 
-                    posture measurements through physical hardware.
-                  </p>
-                  <div className="space-y-4">
-                    <div className="border-l-4 border-primary pl-4">
-                      <h4 className="font-semibold mb-2">Pitch Measurement</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Measures forward/backward tilt of your body. Essential for detecting slouching or 
-                        leaning too far forward, which are common poor posture indicators.
-                      </p>
-                    </div>
-                    <div className="border-l-4 border-accent pl-4">
-                      <h4 className="font-semibold mb-2">Roll Measurement</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Measures side-to-side tilt of your body. Helps identify uneven shoulder positions 
-                        and lateral spine curvature issues.
-                      </p>
-                    </div>
-                  </div>
-                  <Button asChild variant="outline" className="w-full md:w-auto">
-                    <a href="https://wokwi.com/projects/444511972417725441" target="_blank" rel="noopener noreferrer">
-                      View MPU6050 Demo Project →
-                    </a>
-                  </Button>
-                </div>
-                <div className="bg-muted/50 rounded-xl p-6 space-y-4">
-                  <h4 className="font-semibold text-lg">Key Benefits</h4>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center flex-shrink-0 text-sm font-bold">
-                        ✓
-                      </div>
-                      <span className="text-sm">Real-time orientation tracking with 6-axis precision</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center flex-shrink-0 text-sm font-bold">
-                        ✓
-                      </div>
-                      <span className="text-sm">Accurate pitch and roll angles for posture analysis</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center flex-shrink-0 text-sm font-bold">
-                        ✓
-                      </div>
-                      <span className="text-sm">Low power consumption for wearable applications</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center flex-shrink-0 text-sm font-bold">
-                        ✓
-                      </div>
-                      <span className="text-sm">Can complement webcam-based detection</span>
-                    </li>
-                  </ul>
+        <Card className="border-border/50 shadow-hover hover:shadow-glow transition-all duration-300 max-w-5xl mx-auto">
+          <CardContent className="p-8 md:p-12">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-shrink-0">
+                <div className="w-20 h-20 rounded-3xl bg-gradient-accent flex items-center justify-center shadow-glow">
+                  <Cpu className="w-12 h-12 text-white" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-2xl md:text-3xl font-bold mb-3">Hardware Integration Available</h3>
+                <p className="text-lg text-muted-foreground mb-0">
+                  Expand AlignMe with MPU6050 sensors for enhanced physical tracking accuracy
+                </p>
+              </div>
+              <Link to="/hardware">
+                <Button size="lg" variant="hero" className="whitespace-nowrap">
+                  Learn More →
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* CTA Section */}
