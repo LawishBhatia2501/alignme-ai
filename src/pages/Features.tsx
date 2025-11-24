@@ -67,31 +67,34 @@ const Features = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="text-center space-y-6 max-w-4xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-soft">
-                <Activity className="w-10 h-10 text-white" />
+      <div className="relative overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 animate-pulse-glow"></div>
+        
+        <div className="container mx-auto px-4 py-20 md:py-32 relative">
+          <div className="text-center space-y-8 max-w-5xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-6 animate-float">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-hero flex items-center justify-center shadow-glow">
+                <Activity className="w-12 h-12 text-white" />
               </div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+            <h1 className="text-6xl md:text-8xl font-bold text-gradient animate-fade-in-up tracking-tight">
               AlignMe
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              AI-Powered Posture Correction System
+            <p className="text-2xl md:text-3xl font-medium bg-gradient-accent bg-clip-text text-transparent max-w-3xl mx-auto animate-fade-in">
+              AI-Powered Posture Correction
             </p>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Advanced real-time posture monitoring using AI and computer vision. Get instant feedback, 
-              track your progress, and maintain healthy posture throughout your day.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed animate-fade-in">
+              Transform your workspace wellness with real-time AI posture analysis. Get instant feedback, 
+              track your progress, and build healthier habits for a pain-free tomorrow.
             </p>
-            <div className="flex gap-4 justify-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6 animate-slide-up">
               <Link to="/monitor">
-                <Button size="lg" className="text-lg px-8">
+                <Button size="lg" className="text-lg px-10 py-6 shadow-hover hover:shadow-glow transition-all duration-300 hover:scale-105">
                   Start Monitoring
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg px-8" asChild>
+              <Button size="lg" variant="outline" className="text-lg px-10 py-6 hover:scale-105 transition-all duration-300" asChild>
                 <a href="#features">Learn More</a>
               </Button>
             </div>
@@ -100,10 +103,10 @@ const Features = () => {
       </div>
 
       {/* Features Grid */}
-      <div id="features" className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+      <div id="features" className="container mx-auto px-4 py-20">
+        <div className="text-center mb-16 animate-fade-in">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gradient">Powerful Features</h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Everything you need to improve and maintain healthy posture
           </p>
         </div>
@@ -112,12 +115,16 @@ const Features = () => {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="border-border/50 hover:border-primary/50 transition-all hover:shadow-hover">
-                <CardContent className="p-6 space-y-3">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-primary" />
+              <Card 
+                key={index} 
+                className="border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-hover hover:-translate-y-1 card-gradient group"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-accent flex items-center justify-center shadow-soft group-hover:shadow-glow transition-all duration-300 group-hover:scale-110">
+                    <Icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
+                  <h3 className="text-lg font-bold">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
@@ -129,42 +136,44 @@ const Features = () => {
       </div>
 
       {/* How It Works */}
-      <div className="bg-muted/30 py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+      <div className="bg-muted/30 py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
+        
+        <div className="container mx-auto px-4 relative">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gradient">How It Works</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Simple, effective posture monitoring in three steps
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto">
+          <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto">
+            <div className="text-center space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="w-20 h-20 rounded-full bg-gradient-accent text-white text-3xl font-bold flex items-center justify-center mx-auto shadow-glow">
                 1
               </div>
-              <h3 className="text-xl font-semibold">Enable Camera</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-2xl font-bold">Enable Camera</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
                 Allow camera access and sit comfortably in front of your webcam
               </p>
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto">
+            <div className="text-center space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="w-20 h-20 rounded-full bg-gradient-accent text-white text-3xl font-bold flex items-center justify-center mx-auto shadow-glow">
                 2
               </div>
-              <h3 className="text-xl font-semibold">AI Analysis</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-2xl font-bold">AI Analysis</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
                 Our AI analyzes your posture in real-time using advanced pose detection
               </p>
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto">
+            <div className="text-center space-y-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="w-20 h-20 rounded-full bg-gradient-accent text-white text-3xl font-bold flex items-center justify-center mx-auto shadow-glow">
                 3
               </div>
-              <h3 className="text-xl font-semibold">Get Feedback</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-2xl font-bold">Get Feedback</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
                 Receive instant alerts and track your progress with detailed statistics
               </p>
             </div>
@@ -250,19 +259,23 @@ const Features = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="bg-gradient-hero rounded-2xl p-8 md:p-12 text-center text-white">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Improve Your Posture?
-          </h2>
-          <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-            Start monitoring your posture today and develop healthier habits for a better tomorrow
-          </p>
-          <Link to="/monitor">
-            <Button size="lg" variant="secondary" className="text-lg px-8">
-              Start Free Monitoring
-            </Button>
-          </Link>
+      <div className="container mx-auto px-4 py-20">
+        <div className="bg-gradient-hero rounded-3xl p-12 md:p-16 text-center text-white shadow-glow relative overflow-hidden animate-fade-in">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30"></div>
+          
+          <div className="relative">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 animate-pulse-glow">
+              Ready to Improve Your Posture?
+            </h2>
+            <p className="text-xl mb-10 opacity-95 max-w-2xl mx-auto leading-relaxed">
+              Start monitoring your posture today and develop healthier habits for a better tomorrow
+            </p>
+            <Link to="/monitor">
+              <Button size="lg" className="text-lg px-12 py-7 bg-white text-primary hover:bg-white/90 shadow-glow hover:scale-105 transition-all duration-300 font-bold">
+                Start Free Monitoring
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
