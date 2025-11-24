@@ -7,8 +7,6 @@ import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import SessionTimer from "./SessionTimer";
 import PostureStats from "./PostureStats";
-import SessionHistory from "./SessionHistory";
-import SettingsPanel from "./SettingsPanel";
 import { usePostureAudio } from "@/hooks/usePostureAudio";
 import { useToast } from "@/hooks/use-toast";
 import { PostureClassifier, calculateAngle } from "@/utils/postureClassifier";
@@ -52,10 +50,10 @@ const PostureDetector = () => {
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   
-  // Settings
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [alertInterval, setAlertInterval] = useState(10);
-  const [sensitivity, setSensitivity] = useState(2); // 1=strict, 2=normal, 3=relaxed
+  // Settings - fixed values for audio
+  const audioEnabled = true;
+  const alertInterval = 10;
+  const sensitivity = 2;
   
   const poseRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
@@ -63,7 +61,7 @@ const PostureDetector = () => {
   const { playAlert } = usePostureAudio(audioEnabled, alertInterval);
 
   const analyzePosture = (landmarks: any[]) => {
-    // Extract key landmarks - exact same as app.py
+    // Extract key landmarks
     const leftShoulder = landmarks[11];
     const rightShoulder = landmarks[12];
     const leftHip = landmarks[23];
@@ -71,7 +69,7 @@ const PostureDetector = () => {
     const leftEar = landmarks[7];
     const rightEar = landmarks[8];
 
-    // Calculate midpoints (exact same as app.py)
+    // Calculate midpoints
     const midShoulder = [
       (leftShoulder.x + rightShoulder.x) / 2,
       (leftShoulder.y + rightShoulder.y) / 2,
@@ -85,7 +83,7 @@ const PostureDetector = () => {
       (leftEar.y + rightEar.y) / 2,
     ];
 
-    // Calculate angles - exact same as app.py
+    // Calculate angles
     const backAngle = calculateAngle(midEar, midShoulder, midHip);
     const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y) * 100;
     const neckAngle = calculateAngle(
@@ -102,29 +100,34 @@ const PostureDetector = () => {
 
     setAngles(currentAngles);
 
-    // Determine posture status using classifier (exact thresholds from app.py)
-    const status = classifierRef.current.classify(backAngle, shoulderLevel);
+    // Classify posture
+    const status = classifierRef.current.classify(
+      currentAngles.back,
+      currentAngles.shoulder
+    );
+    setPostureStatus(status);
 
-    // Update counters
+    // Update counts
     if (status === "good") {
-      setGoodCount(prev => prev + 1);
+      setGoodCount((prev) => prev + 1);
     } else if (status === "okay") {
-      setOkayCount(prev => prev + 1);
-    } else {
-      setBadCount(prev => prev + 1);
+      setOkayCount((prev) => prev + 1);
+    } else if (status === "bad") {
+      setBadCount((prev) => prev + 1);
       playAlert();
     }
 
-    setPostureStatus(status);
-
-    // Add to history (limit to last 100 entries for performance)
-    setHistoryData(prev => {
-      const newData = [...prev, {
-        timestamp: Date.now(),
-        ...currentAngles,
-        status,
-      }];
-      return newData.slice(-100);
+    // Add to history
+    setHistoryData((prev) => {
+      const newData = [
+        ...prev,
+        {
+          timestamp: Date.now(),
+          ...currentAngles,
+          status,
+        },
+      ].slice(-100); // Keep last 100 items
+      return newData;
     });
   };
 
@@ -134,14 +137,15 @@ const PostureDetector = () => {
     const canvasCtx = canvasRef.current.getContext("2d");
     if (!canvasCtx) return;
 
-    canvasRef.current.width = videoRef.current.videoWidth;
-    canvasRef.current.height = videoRef.current.videoHeight;
-
-    // Clear canvas
     canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    canvasCtx.clearRect(
+      0,
+      0,
+      canvasRef.current.width,
+      canvasRef.current.height
+    );
 
-    // Draw the video frame
+    // Draw video frame
     canvasCtx.drawImage(
       results.image,
       0,
@@ -187,7 +191,6 @@ const PostureDetector = () => {
               }
             }, 100);
 
-            // Timeout after 10 seconds
             setTimeout(() => {
               clearInterval(checkInterval);
               reject(new Error("MediaPipe libraries failed to load"));
@@ -206,7 +209,6 @@ const PostureDetector = () => {
           } 
         });
         
-        // Stop the stream as MediaPipe will handle it
         stream.getTracks().forEach(track => track.stop());
 
         // Initialize MediaPipe Pose using global object
@@ -306,7 +308,7 @@ const PostureDetector = () => {
       badPercentage,
     };
 
-    const updatedSessions = [newSession, ...sessions].slice(0, 10); // Keep last 10 sessions
+    const updatedSessions = [newSession, ...sessions].slice(0, 10);
     setSessions(updatedSessions);
     localStorage.setItem("alignme_sessions", JSON.stringify(updatedSessions));
 
@@ -342,74 +344,65 @@ const PostureDetector = () => {
     });
   };
 
-  const clearHistory = () => {
-    setSessions([]);
-    localStorage.removeItem("alignme_sessions");
-    toast({
-      title: "History Cleared",
-      description: "All session history has been removed",
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
-      <div className="w-full max-w-7xl mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center shadow-soft">
-              <Activity className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-                AlignMe
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                AI-Powered Posture Correction
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="w-9 h-9 p-0"
-            >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <Home className="w-4 h-4 mr-2" />
-                Home
-              </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <div className="w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center shadow-soft">
+                <Activity className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">AlignMe</h1>
+                <p className="text-xs text-muted-foreground">AI-Powered Posture Correction</p>
+              </div>
             </Link>
-            <Button onClick={saveSession} variant="outline" size="sm">
-              Save Session
-            </Button>
-            <Button onClick={exportData} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export Data
-            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Link to="/">
+                <Button variant="ghost" size="sm">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </Button>
+              <Button onClick={saveSession} size="sm" variant="outline">
+                Save Session
+              </Button>
+              <Button onClick={exportData} size="sm" variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Data
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6">
         {/* Session Timer */}
         <SessionTimer isActive={isActive} />
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-5 gap-4">
-          {/* Video Feed */}
+        {/* Main Grid */}
+        <div className="grid lg:grid-cols-5 gap-6 mt-6">
+          {/* Video Feed - Left Side */}
           <Card className="lg:col-span-3 border-border/50 shadow-hover">
             <CardContent className="p-6">
-              <div className="relative aspect-video bg-card rounded-lg overflow-hidden">
+              <div className="relative aspect-video bg-card rounded-xl overflow-hidden shadow-soft">
                 {isLoading && !error && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                    <div className="text-center space-y-2">
-                      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                      <p className="text-sm text-muted-foreground">Initializing camera...</p>
+                    <div className="text-center space-y-3">
+                      <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+                      <p className="text-sm font-medium">Initializing camera...</p>
                       <p className="text-xs text-muted-foreground">Please allow camera access when prompted</p>
                     </div>
                   </div>
@@ -417,7 +410,7 @@ const PostureDetector = () => {
                 {error && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted p-6">
                     <div className="text-center space-y-4 max-w-md">
-                      <div className="text-4xl">📷</div>
+                      <div className="text-5xl">📷</div>
                       <p className="text-sm font-medium text-destructive">{error}</p>
                       <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                         Refresh Page
@@ -436,11 +429,11 @@ const PostureDetector = () => {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 
-                {/* Posture Status Overlay */}
-                {!isLoading && (
+                {/* Posture Status Badge */}
+                {!isLoading && !error && (
                   <div className="absolute top-4 left-4">
                     <Badge 
-                      className={`text-base px-3 py-1.5 ${
+                      className={`text-base px-4 py-2 font-bold shadow-glow ${
                         postureStatus === "good" 
                           ? "bg-accent text-accent-foreground" 
                           : postureStatus === "okay"
@@ -458,85 +451,72 @@ const PostureDetector = () => {
             </CardContent>
           </Card>
 
-          {/* Right Sidebar */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Angles Panel */}
-            <Card className="border-border/50 shadow-hover">
-              <CardContent className="p-4 space-y-4">
-                <h3 className="text-lg font-bold mb-3">Live Angles</h3>
-                 <div className="space-y-3">
-                   {/* Back Angle */}
-                   <div className="space-y-1.5">
-                     <div className="flex items-center justify-between">
-                       <span className="text-xs font-medium">Back Alignment</span>
-                       <span className="text-xl font-bold text-primary">{angles.back}°</span>
-                     </div>
-                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                       <div
-                         className={`h-full transition-all duration-300 ${
-                           angles.back >= 155 ? "bg-accent" : angles.back >= 135 ? "bg-warning" : "bg-destructive"
-                         }`}
-                         style={{ width: `${Math.min(100, (angles.back / 180) * 100)}%` }}
-                       />
-                     </div>
-                     <p className="text-xs text-muted-foreground">Good: ≥155° | Okay: ≥135°</p>
-                   </div>
+          {/* Right Sidebar - Live Angles and Stats Only */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Live Angles */}
+            <Card className="border-border/50 shadow-hover card-gradient">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xl font-bold mb-4">Live Angles</h3>
+                <div className="space-y-4">
+                  {/* Back Angle */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">Back Alignment</span>
+                      <span className="text-2xl font-bold text-primary">{angles.back}°</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          angles.back >= 155 ? "bg-accent" : angles.back >= 135 ? "bg-warning" : "bg-destructive"
+                        }`}
+                        style={{ width: `${Math.min(100, (angles.back / 180) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Good: ≥155° | Okay: ≥135°</p>
+                  </div>
 
-                   {/* Shoulder Level */}
-                   <div className="space-y-1.5">
-                     <div className="flex items-center justify-between">
-                       <span className="text-xs font-medium">Shoulder Level</span>
-                       <span className="text-xl font-bold text-primary">{angles.shoulder.toFixed(1)}</span>
-                     </div>
-                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                       <div
-                         className={`h-full transition-all duration-300 ${
-                           angles.shoulder < 4 ? "bg-accent" : angles.shoulder < 7 ? "bg-warning" : "bg-destructive"
-                         }`}
-                         style={{ width: `${Math.min(100, (angles.shoulder / 15) * 100)}%` }}
-                       />
-                     </div>
-                     <p className="text-xs text-muted-foreground">Good: &lt;4 | Okay: &lt;7</p>
-                   </div>
+                  {/* Shoulder Level */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">Shoulder Level</span>
+                      <span className="text-2xl font-bold text-primary">{angles.shoulder.toFixed(1)}</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          angles.shoulder < 4 ? "bg-accent" : angles.shoulder < 7 ? "bg-warning" : "bg-destructive"
+                        }`}
+                        style={{ width: `${Math.min(100, (angles.shoulder / 15) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Good: &lt;4 | Okay: &lt;7</p>
+                  </div>
 
-                   {/* Neck Angle */}
-                   <div className="space-y-1.5">
-                     <div className="flex items-center justify-between">
-                       <span className="text-xs font-medium">Neck Angle</span>
-                       <span className="text-xl font-bold text-primary">{angles.neck}°</span>
-                     </div>
-                     <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                       <div
-                         className={`h-full transition-all duration-300 bg-primary`}
-                         style={{ width: `${Math.min(100, (angles.neck / 180) * 100)}%` }}
-                       />
-                     </div>
-                     <p className="text-xs text-muted-foreground">Reference angle</p>
-                   </div>
-                 </div>
+                  {/* Neck Angle */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">Neck Angle</span>
+                      <span className="text-2xl font-bold text-primary">{angles.neck}°</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-full transition-all duration-300 bg-primary"
+                        style={{ width: `${Math.min(100, (angles.neck / 180) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Reference angle</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Stats */}
+            {/* Posture Statistics */}
             <PostureStats
               historyData={historyData}
               goodCount={goodCount}
               okayCount={okayCount}
               badCount={badCount}
             />
-
-            {/* Settings */}
-            <SettingsPanel
-              audioEnabled={audioEnabled}
-              onAudioToggle={setAudioEnabled}
-              alertInterval={alertInterval}
-              onAlertIntervalChange={setAlertInterval}
-              sensitivity={sensitivity}
-              onSensitivityChange={setSensitivity}
-            />
-
-            {/* Session History */}
-            <SessionHistory sessions={sessions} onClearHistory={clearHistory} />
           </div>
         </div>
       </div>
