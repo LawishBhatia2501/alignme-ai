@@ -160,12 +160,12 @@ const PostureDetector = () => {
       if (drawingUtils.drawConnectors) {
         drawingUtils.drawConnectors(canvasCtx, results.poseLandmarks, (window as any).POSE_CONNECTIONS, {
           color: "#00FF00",
-          lineWidth: 4,
+          lineWidth: 2,
         });
         drawingUtils.drawLandmarks(canvasCtx, results.poseLandmarks, {
           color: "#FF0000",
-          lineWidth: 2,
-          radius: 6,
+          lineWidth: 1,
+          radius: 3,
         });
       }
 
