@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Activity, Brain, Clock, LineChart, Volume2, Settings as SettingsIcon, TrendingUp, Download, Moon, Sun } from "lucide-react";
+import { Activity, Brain, Clock, LineChart, Volume2, Settings as SettingsIcon, TrendingUp, Download, Moon, Sun, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -99,30 +99,32 @@ const Features = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20 md:py-32">
-        <div className="text-center space-y-6 max-w-4xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center">
+      <div className="container mx-auto px-4 py-20 md:py-32 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none"></div>
+        <div className="text-center space-y-6 max-w-4xl mx-auto relative z-10">
+          <div className="flex items-center justify-center gap-3 mb-6 animate-fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center transition-transform hover:scale-110">
               <Activity className="w-10 h-10 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-foreground">
+          <h1 className="text-5xl md:text-7xl font-bold text-foreground animate-fade-in" style={{ animationDelay: '0.1s' }}>
             AlignMe
           </h1>
-          <p className="text-xl md:text-2xl text-primary font-medium">
+          <p className="text-xl md:text-2xl text-primary font-medium animate-fade-in" style={{ animationDelay: '0.2s' }}>
             AI-Powered Posture Correction
           </p>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
             Transform your workspace wellness with real-time AI posture analysis. Get instant feedback, 
             track your progress, and build healthier habits.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <Link to="/monitor">
-              <Button size="lg" className="text-lg px-8">
+              <Button size="lg" className="text-lg px-8 transition-all hover:scale-105 hover:shadow-lg">
                 Start Monitoring
+                <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8" asChild>
+            <Button size="lg" variant="outline" className="text-lg px-8 transition-all hover:scale-105" asChild>
               <a href="#features">Learn More</a>
             </Button>
           </div>
@@ -142,7 +144,11 @@ const Features = () => {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={index} 
+                className="hover:shadow-lg transition-all hover:-translate-y-1 animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
                 <CardContent className="p-6 space-y-4">
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Icon className="w-6 h-6 text-primary" />
@@ -169,8 +175,8 @@ const Features = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto">
+            <div className="text-center space-y-4 group">
+              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
                 1
               </div>
               <h3 className="text-xl font-semibold">Enable Camera</h3>
@@ -179,8 +185,8 @@ const Features = () => {
               </p>
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto">
+            <div className="text-center space-y-4 group">
+              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
                 2
               </div>
               <h3 className="text-xl font-semibold">AI Analysis</h3>
@@ -189,8 +195,8 @@ const Features = () => {
               </p>
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto">
+            <div className="text-center space-y-4 group">
+              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
                 3
               </div>
               <h3 className="text-xl font-semibold">Get Feedback</h3>
@@ -198,6 +204,26 @@ const Features = () => {
                 Receive instant alerts and track your progress with detailed statistics
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hardware Integration */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h2 className="text-3xl md:text-4xl font-bold">Hardware Integration</h2>
+          <p className="text-lg text-muted-foreground">
+            Take your posture monitoring to the next level with our MPU6050 sensor integration. 
+            Get precise angle measurements directly from hardware sensors for enhanced accuracy 
+            and reliability, even when away from your computer.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <Link to="/hardware">
+              <Button size="lg" className="text-lg px-8 transition-all hover:scale-105">
+                Learn More About Hardware
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
