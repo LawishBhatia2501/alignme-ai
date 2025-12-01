@@ -100,10 +100,11 @@ const Features = () => {
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20 md:py-32 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,252,0.1),transparent_70%)] pointer-events-none"></div>
         <div className="text-center space-y-6 max-w-4xl mx-auto relative z-10">
           <div className="flex items-center justify-center gap-3 mb-6 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center transition-transform hover:scale-110">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-all hover:scale-110 hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.5)]">
               <Activity className="w-10 h-10 text-primary-foreground" />
             </div>
           </div>
@@ -119,12 +120,12 @@ const Features = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <Link to="/monitor">
-              <Button size="lg" className="text-lg px-8 transition-all hover:scale-105 hover:shadow-lg">
+              <Button size="lg" className="text-lg px-8 transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.4)]">
                 Start Monitoring
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8 transition-all hover:scale-105" asChild>
+            <Button size="lg" variant="outline" className="text-lg px-8 transition-all hover:scale-105 hover:border-primary/50" asChild>
               <a href="#features">Learn More</a>
             </Button>
           </div>
@@ -146,15 +147,16 @@ const Features = () => {
             return (
               <Card 
                 key={index} 
-                className="hover:shadow-lg transition-all hover:-translate-y-1 animate-fade-in"
+                className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.3)] animate-fade-in"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <CardContent className="relative p-6 space-y-4">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(var(--neon-glow-rgb),0.3)] transition-all duration-500">
                     <Icon className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -176,7 +178,7 @@ const Features = () => {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="text-center space-y-4 group">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.5)]">
                 1
               </div>
               <h3 className="text-xl font-semibold">Enable Camera</h3>
@@ -186,7 +188,7 @@ const Features = () => {
             </div>
 
             <div className="text-center space-y-4 group">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.5)]">
                 2
               </div>
               <h3 className="text-xl font-semibold">AI Analysis</h3>
@@ -196,7 +198,7 @@ const Features = () => {
             </div>
 
             <div className="text-center space-y-4 group">
-              <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.5)]">
                 3
               </div>
               <h3 className="text-xl font-semibold">Get Feedback</h3>
@@ -230,18 +232,22 @@ const Features = () => {
 
       {/* CTA Section */}
       <div className="container mx-auto px-4 py-16">
-        <div className="bg-primary rounded-2xl p-12 text-center text-primary-foreground max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Improve Your Posture?
-          </h2>
-          <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-            Start monitoring your posture today and develop healthier habits for a better tomorrow
-          </p>
-          <Link to="/monitor">
-            <Button size="lg" variant="secondary" className="text-lg px-8">
-              Start Free Monitoring
-            </Button>
-          </Link>
+        <div className="relative bg-gradient-to-br from-card to-secondary rounded-2xl p-12 text-center max-w-4xl mx-auto border border-primary/30 shadow-[0_0_50px_rgba(var(--neon-glow-rgb),0.2)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 rounded-2xl"></div>
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+              Ready to Improve Your Posture?
+            </h2>
+            <p className="text-lg mb-8 text-muted-foreground max-w-2xl mx-auto">
+              Start monitoring your posture today and develop healthier habits for a better tomorrow
+            </p>
+            <Link to="/monitor">
+              <Button size="lg" className="text-lg px-8 transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.5)]">
+                Start Free Monitoring
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
