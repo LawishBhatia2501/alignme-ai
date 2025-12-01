@@ -158,20 +158,14 @@ const PostureDetector = () => {
       // Draw pose landmarks using global drawing_utils
       const drawingUtils = (window as any).drawingUtils || (window as any);
       if (drawingUtils.drawConnectors) {
-        // Color based on posture status
-        const connectionColor = postureStatus === "good" ? "#22c55e" : 
-                               postureStatus === "okay" ? "#eab308" : "#ef4444";
-        const landmarkColor = postureStatus === "good" ? "#22c55e" : 
-                             postureStatus === "okay" ? "#eab308" : "#ef4444";
-        
         drawingUtils.drawConnectors(canvasCtx, results.poseLandmarks, (window as any).POSE_CONNECTIONS, {
-          color: connectionColor,
-          lineWidth: 1,
+          color: "#00FF00",
+          lineWidth: 2,
         });
         drawingUtils.drawLandmarks(canvasCtx, results.poseLandmarks, {
-          color: landmarkColor,
-          lineWidth: 0.5,
-          radius: 2,
+          color: "#FF0000",
+          lineWidth: 1,
+          radius: 3,
         });
       }
 
@@ -441,7 +435,7 @@ const PostureDetector = () => {
                     <Badge 
                       className={`text-base px-4 py-2 font-bold shadow-glow ${
                         postureStatus === "good" 
-                          ? "bg-accent text-accent-foreground" 
+                          ? "bg-success text-success-foreground" 
                           : postureStatus === "okay"
                           ? "bg-warning text-warning-foreground"
                           : postureStatus === "bad"
