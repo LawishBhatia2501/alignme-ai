@@ -35,9 +35,9 @@ const PostureStats = ({ historyData, goodCount, okayCount, badCount }: PostureSt
     <div className="space-y-4">
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
-        <Card className="border-accent/20 bg-accent/5">
+        <Card className="border-success/20 bg-success/5">
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-accent">{goodPercentage}%</div>
+            <div className="text-3xl font-bold text-success">{goodPercentage}%</div>
             <div className="text-xs text-muted-foreground mt-1">Good Posture</div>
             <div className="text-xs text-muted-foreground">({goodCount} frames)</div>
           </CardContent>

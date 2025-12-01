@@ -158,12 +158,18 @@ const PostureDetector = () => {
       // Draw pose landmarks using global drawing_utils
       const drawingUtils = (window as any).drawingUtils || (window as any);
       if (drawingUtils.drawConnectors) {
+        // Color based on posture status
+        const connectionColor = postureStatus === "good" ? "#22c55e" : 
+                               postureStatus === "okay" ? "#eab308" : "#ef4444";
+        const landmarkColor = postureStatus === "good" ? "#22c55e" : 
+                             postureStatus === "okay" ? "#eab308" : "#ef4444";
+        
         drawingUtils.drawConnectors(canvasCtx, results.poseLandmarks, (window as any).POSE_CONNECTIONS, {
-          color: "#00FF00",
+          color: connectionColor,
           lineWidth: 1,
         });
         drawingUtils.drawLandmarks(canvasCtx, results.poseLandmarks, {
-          color: "#FF0000",
+          color: landmarkColor,
           lineWidth: 0.5,
           radius: 2,
         });
