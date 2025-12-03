@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Download, Home, Moon, Sun } from "lucide-react";
+import { Activity, Download, Home, Moon, Sun, AlertTriangle, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import SessionTimer from "./SessionTimer";
@@ -517,6 +517,40 @@ const PostureDetector = () => {
               okayCount={okayCount}
               badCount={badCount}
             />
+
+            {/* Posture Correction Tips - Shows when bad posture detected */}
+            {postureStatus === "bad" && (
+              <Card className="border-destructive/50 bg-destructive/10 shadow-hover animate-pulse">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    <h3 className="font-bold text-destructive">Posture Correction Tips</h3>
+                  </div>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                      <span>Sit back in your chair with your back against the backrest</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                      <span>Keep your shoulders relaxed and level, not hunched forward</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                      <span>Position your screen at eye level to avoid neck strain</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                      <span>Keep feet flat on the floor with knees at 90°</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                      <span>Take a 30-second stretch break every 30 minutes</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
