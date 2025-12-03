@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Activity, Brain, Clock, LineChart, Volume2, Settings as SettingsIcon, TrendingUp, Download, Moon, Sun, ChevronRight } from "lucide-react";
+import { Activity, Brain, Clock, LineChart, Volume2, Settings as SettingsIcon, TrendingUp, Download, Moon, Sun, ChevronRight, Cpu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -60,6 +60,13 @@ const Features = () => {
     <div className="min-h-screen bg-background">
       {/* Header with Theme Toggle and Settings */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        <Link to="/hardware">
+          <Button variant="ghost" size="sm">
+            <Cpu className="w-4 h-4 mr-2" />
+            Hardware
+          </Button>
+        </Link>
+
         <Dialog>
           <DialogTrigger asChild>
             <Button
