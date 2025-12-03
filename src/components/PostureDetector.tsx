@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Activity, Download, Home, Moon, Sun, AlertTriangle, Lightbulb } from "lucide-react";
+import { Activity, Download, Home, Moon, Sun, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import SessionTimer from "./SessionTimer";
@@ -394,62 +394,100 @@ const PostureDetector = () => {
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-5 gap-6 mt-6">
-          {/* Video Feed - Left Side */}
-          <Card className="lg:col-span-3 border-border/50 shadow-hover">
-            <CardContent className="p-6">
-              <div className="relative aspect-video bg-card rounded-xl overflow-hidden shadow-soft">
-                {isLoading && !error && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                    <div className="text-center space-y-3">
-                      <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                      <p className="text-sm font-medium">Initializing camera...</p>
-                      <p className="text-xs text-muted-foreground">Please allow camera access when prompted</p>
+          {/* Left Side - Video Feed + Tips */}
+          <div className="lg:col-span-3 space-y-4">
+            <Card className="border-border/50 shadow-hover">
+              <CardContent className="p-6">
+                <div className="relative aspect-video bg-card rounded-xl overflow-hidden shadow-soft">
+                  {isLoading && !error && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <div className="text-center space-y-3">
+                        <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+                        <p className="text-sm font-medium">Initializing camera...</p>
+                        <p className="text-xs text-muted-foreground">Please allow camera access when prompted</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {error && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted p-6">
-                    <div className="text-center space-y-4 max-w-md">
-                      <div className="text-5xl">📷</div>
-                      <p className="text-sm font-medium text-destructive">{error}</p>
-                      <Button onClick={() => window.location.reload()} variant="outline" size="sm">
-                        Refresh Page
-                      </Button>
+                  )}
+                  {error && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted p-6">
+                      <div className="text-center space-y-4 max-w-md">
+                        <div className="text-5xl">📷</div>
+                        <p className="text-sm font-medium text-destructive">{error}</p>
+                        <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+                          Refresh Page
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-                <video
-                  ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-cover hidden"
-                  playsInline
-                  autoPlay
-                />
-                <canvas
-                  ref={canvasRef}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                
-                {/* Posture Status Badge */}
-                {!isLoading && !error && (
-                  <div className="absolute top-4 left-4">
-                    <Badge 
-                      className={`text-base px-4 py-2 font-bold shadow-glow ${
-                        postureStatus === "good" 
-                          ? "bg-success text-success-foreground" 
-                          : postureStatus === "okay"
-                          ? "bg-warning text-warning-foreground"
-                          : postureStatus === "bad"
-                          ? "bg-destructive text-destructive-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {postureStatus === "good" ? "✓ Good" : postureStatus === "okay" ? "~ Okay" : postureStatus === "bad" ? "✗ Bad" : "Checking..."}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  )}
+                  <video
+                    ref={videoRef}
+                    className="absolute inset-0 w-full h-full object-cover hidden"
+                    playsInline
+                    autoPlay
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  
+                  {/* Posture Status Badge */}
+                  {!isLoading && !error && (
+                    <div className="absolute top-4 left-4">
+                      <Badge 
+                        className={`text-base px-4 py-2 font-bold shadow-glow ${
+                          postureStatus === "good" 
+                            ? "bg-success text-success-foreground" 
+                            : postureStatus === "okay"
+                            ? "bg-warning text-warning-foreground"
+                            : postureStatus === "bad"
+                            ? "bg-destructive text-destructive-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {postureStatus === "good" ? "✓ Good" : postureStatus === "okay" ? "~ Okay" : postureStatus === "bad" ? "✗ Bad" : "Checking..."}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Posture Correction Tips - Below camera */}
+            <Card className={`border-border/50 shadow-hover transition-colors ${postureStatus === "bad" ? "border-destructive/50 bg-destructive/5" : ""}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Lightbulb className={`w-5 h-5 ${postureStatus === "bad" ? "text-destructive" : "text-primary"}`} />
+                  <h3 className={`font-bold ${postureStatus === "bad" ? "text-destructive" : ""}`}>Posture Correction Tips</h3>
+                </div>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Sit back with your back against the backrest</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Keep shoulders relaxed and level</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Position screen at eye level</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Keep feet flat on the floor</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Take stretch breaks every 30 mins</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <span>Avoid leaning forward</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Right Sidebar - Live Angles and Stats Only */}
           <div className="lg:col-span-2 space-y-6">
@@ -517,40 +555,6 @@ const PostureDetector = () => {
               okayCount={okayCount}
               badCount={badCount}
             />
-
-            {/* Posture Correction Tips - Shows when bad posture detected */}
-            {postureStatus === "bad" && (
-              <Card className="border-destructive/50 bg-destructive/10 shadow-hover animate-pulse">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertTriangle className="w-5 h-5 text-destructive" />
-                    <h3 className="font-bold text-destructive">Posture Correction Tips</h3>
-                  </div>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-                      <span>Sit back in your chair with your back against the backrest</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-                      <span>Keep your shoulders relaxed and level, not hunched forward</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-                      <span>Position your screen at eye level to avoid neck strain</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-                      <span>Keep feet flat on the floor with knees at 90°</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Lightbulb className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-                      <span>Take a 30-second stretch break every 30 minutes</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>
