@@ -1,10 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Cpu, Activity, Gauge } from "lucide-react";
+import { ArrowLeft, Cpu, Activity, Gauge, Moon, Sun, Home } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 
 const Hardware = () => {
+  const { theme, setTheme } = useTheme();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -18,14 +21,36 @@ const Hardware = () => {
                 </Button>
               </Link>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center shadow-soft">
-                  <Cpu className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-soft">
+                  <Cpu className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold">Hardware Integration</h1>
                   <p className="text-sm text-muted-foreground">MPU6050 Sensor System</p>
                 </div>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link to="/">
+                <Button variant="ghost" size="sm">
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </Button>
+              </Link>
+              <Link to="/monitor">
+                <Button variant="ghost" size="sm">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Monitor
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </Button>
             </div>
           </div>
         </div>
@@ -101,7 +126,7 @@ const Hardware = () => {
                       "I2C communication for easy integration"
                     ].map((benefit, index) => (
                       <li key={index} className="flex items-start gap-3 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                        <div className="w-6 h-6 rounded-full bg-gradient-accent text-white flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-soft">
+                        <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-soft">
                           ✓
                         </div>
                         <span className="text-sm leading-relaxed">{benefit}</span>
@@ -117,8 +142,8 @@ const Hardware = () => {
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-border/50 hover:shadow-hover transition-all duration-300 hover:-translate-y-1 card-gradient">
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-accent flex items-center justify-center mb-4 shadow-soft">
-                  <Cpu className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-soft">
+                  <Cpu className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">Gyroscope</h3>
                 <p className="text-sm text-muted-foreground mb-3">3-axis angular velocity sensor</p>
@@ -131,8 +156,8 @@ const Hardware = () => {
 
             <Card className="border-border/50 hover:shadow-hover transition-all duration-300 hover:-translate-y-1 card-gradient">
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-accent flex items-center justify-center mb-4 shadow-soft">
-                  <Activity className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-soft">
+                  <Activity className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">Accelerometer</h3>
                 <p className="text-sm text-muted-foreground mb-3">3-axis acceleration sensor</p>
@@ -145,8 +170,8 @@ const Hardware = () => {
 
             <Card className="border-border/50 hover:shadow-hover transition-all duration-300 hover:-translate-y-1 card-gradient">
               <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-accent flex items-center justify-center mb-4 shadow-soft">
-                  <Gauge className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-soft">
+                  <Gauge className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">Communication</h3>
                 <p className="text-sm text-muted-foreground mb-3">Digital interface</p>
@@ -159,17 +184,18 @@ const Hardware = () => {
           </div>
 
           {/* Demo Project CTA */}
-          <Card className="border-border/50 bg-gradient-hero shadow-glow text-white">
+          <Card className="border-primary/30 bg-primary shadow-glow">
             <CardContent className="p-8 md:p-12 text-center">
-              <h3 className="text-3xl font-bold mb-4">
+              <h3 className="text-3xl font-bold mb-4 text-primary-foreground">
                 Try the MPU6050 Demo
               </h3>
-              <p className="text-lg mb-8 opacity-95 max-w-2xl mx-auto">
+              <p className="text-lg mb-8 text-primary-foreground/90 max-w-2xl mx-auto">
                 Experience the sensor in action with our interactive Wokwi simulation project
               </p>
               <Button 
                 size="lg" 
-                className="bg-white text-primary hover:bg-white/90 shadow-glow hover:scale-105 transition-all duration-300 font-bold"
+                variant="secondary"
+                className="shadow-glow hover:scale-105 transition-all duration-300 font-bold"
                 asChild
               >
                 <a href="https://wokwi.com/projects/444511972417725441" target="_blank" rel="noopener noreferrer">
@@ -185,7 +211,7 @@ const Hardware = () => {
               <h3 className="text-2xl font-bold mb-6">Integration Overview</h3>
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="text-center space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-gradient-accent text-white text-2xl font-bold flex items-center justify-center mx-auto shadow-glow">
+                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto shadow-glow">
                     1
                   </div>
                   <h4 className="font-bold">Connect Sensor</h4>
@@ -194,7 +220,7 @@ const Hardware = () => {
                   </p>
                 </div>
                 <div className="text-center space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-gradient-accent text-white text-2xl font-bold flex items-center justify-center mx-auto shadow-glow">
+                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto shadow-glow">
                     2
                   </div>
                   <h4 className="font-bold">Configure Software</h4>
@@ -203,7 +229,7 @@ const Hardware = () => {
                   </p>
                 </div>
                 <div className="text-center space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-gradient-accent text-white text-2xl font-bold flex items-center justify-center mx-auto shadow-glow">
+                  <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-bold flex items-center justify-center mx-auto shadow-glow">
                     3
                   </div>
                   <h4 className="font-bold">Stream Data</h4>
