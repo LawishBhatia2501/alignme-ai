@@ -107,9 +107,7 @@ const Features = () => {
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20 md:py-32 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,252,0.1),transparent_70%)] pointer-events-none"></div>
-        <div className="text-center space-y-6 max-w-4xl mx-auto relative z-10">
+        <div className="text-center space-y-6 max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-6 animate-fade-in">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-all hover:scale-110 hover:shadow-[0_0_30px_rgba(var(--neon-glow-rgb),0.5)]">
               <Activity className="w-10 h-10 text-primary-foreground" />
